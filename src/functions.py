@@ -1,4 +1,5 @@
 from functools import reduce
+from re import findall, split as regex_split
 
 from textnode import TextType, TextNode
 from leafnode import LeafNode
@@ -43,3 +44,39 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
                 return_nodes.append(TextNode(chunk, node.text_type))
         return return_nodes
     return reduce(lambda a, b: a + b, [split_one_node(node) for node in old_nodes])
+
+def extract_markdown_images(md):
+    return findall(r"!\[([^\]]*)\]\(([^\)]+)\)", md)
+
+def extract_markdown_links(md):
+    return findall(r"(?<!!)\[([^\]]*)\]\(([^\)]+)\)", md)
+
+def split_nodes_link(old_nodes):
+    def split_one_node(node):
+        return_nodes = []
+        text_nodes = [TextNode(chunk, node.text_type) for chunk in regex_split(r"(?<!!)\[[^\]]*\]\([^\)]+\)", node.text)]
+        link_tuples = extract_markdown_links(node.text)  
+        for i in range(len(text_nodes)):
+            t_node = text_nodes[i]
+            if len(t_node.text):
+                return_nodes.append(t_node)
+            if i < len(link_tuples):
+                link_tup = link_tuples[i]
+                return_nodes.append(TextNode(link_tup[0], TextType.LINK, link_tup[-1]))
+        return return_nodes
+    return reduce(lambda a, b: a+b, [split_one_node(node) for node in old_nodes])
+
+def split_nodes_image(old_nodes):
+    def split_one_node(node):
+        return_nodes = []
+        text_nodes = [TextNode(chunk, node.text_type) for chunk in regex_split(r"!\[[^\]]*\]\([^\)]+\)", node.text)]
+        img_tuples = extract_markdown_images(node.text)  
+        for i in range(len(text_nodes)):
+            t_node = text_nodes[i]
+            if len(t_node.text):
+                return_nodes.append(t_node)
+            if i < len(img_tuples):
+                img_tup = img_tuples[i]
+                return_nodes.append(TextNode(img_tup[0], TextType.IMG, img_tup[-1]))
+        return return_nodes
+    return reduce(lambda a, b: a+b, [split_one_node(node) for node in old_nodes])
