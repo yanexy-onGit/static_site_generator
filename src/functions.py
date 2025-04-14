@@ -1,4 +1,6 @@
-from textnode import TextType
+from functools import reduce
+
+from textnode import TextType, TextNode
 from leafnode import LeafNode
 
 class TagType():
@@ -26,3 +28,18 @@ def text_node_to_html_node(text_node):
         case TextType.IMG:
             return LeafNode(TagType.IMG, None, props={ "src": text_node.url, "alt": text_node.text })
     raise Exception("text_node.text_type invalid")
+
+def split_nodes_delimiter(old_nodes, delimiter, text_type):
+    def split_one_node(node):
+        return_nodes = []
+        idx = -1
+        for chunk in node.text.split(delimiter):
+            idx += 1
+            if not len(chunk):
+                continue
+            if idx % 2:
+                return_nodes.append(TextNode(chunk, text_type))
+            else:
+                return_nodes.append(TextNode(chunk, node.text_type))
+        return return_nodes
+    return reduce(lambda a, b: a + b, [split_one_node(node) for node in old_nodes])
