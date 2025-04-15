@@ -48,19 +48,141 @@ class TestFunctions(unittest.TestCase):
         self.assertListEqual(split_nodes_link([node, node]), expected_return)
     def test_split_images(self):
         node = TextNode(
-            "![image](https://i.imgur.com/zjjcJKZ.png)![second image](https://i.imgur.com/3elNhQu.png)",
+            "![image](https://i.imgur.com/zjjcJKZ.png) ![second image](https://i.imgur.com/3elNhQu.png)",
             TextType.PLAIN,
         )
         new_nodes = split_nodes_image([node])
         self.assertListEqual(
             [
                 TextNode("image", TextType.IMG, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode(" ", TextType.PLAIN),
                 TextNode(
                     "second image", TextType.IMG, "https://i.imgur.com/3elNhQu.png"
                 ),
             ],
             new_nodes,
         )
+    def test_text_to_textnodes(self):
+        text = "This is **text** with an _italic_ word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
+        expected_return = [
+            TextNode("This is ", TextType.PLAIN),
+            TextNode("text", TextType.BOLD),
+            TextNode(" with an ", TextType.PLAIN),
+            TextNode("italic", TextType.ITALIC),
+            TextNode(" word and a ", TextType.PLAIN),
+            TextNode("code block", TextType.CODE),
+            TextNode(" and an ", TextType.PLAIN),
+            TextNode("obi wan image", TextType.IMG, "https://i.imgur.com/fJRm4Vk.jpeg"),
+            TextNode(" and a ", TextType.PLAIN),
+            TextNode("link", TextType.LINK, "https://boot.dev"),
+        ]
+        self.assertListEqual(text_to_textnodes(text), expected_return)
+
+    def test_markdown_to_blocks(self):
+        md = """
+            This is **bolded** paragraph
+
+            This is another paragraph with _italic_ text and `code` here
+            This is the same paragraph on a new line
+
+            - This is a list
+            - with items
+            """
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "This is **bolded** paragraph",
+                "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+                "- This is a list\n- with items",
+            ],
+        )
+        md = """
+            # This is a heading
+
+            This is a paragraph of text. It has some **bold** and _italic_ words inside of it.
+
+            - This is the first list item in a list block
+            - This is a list item
+            - This is another list item
+            """
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "# This is a heading",
+                "This is a paragraph of text. It has some **bold** and _italic_ words inside of it.",
+                "- This is the first list item in a list block\n- This is a list item\n- This is another list item"
+            ]
+        )
+    def test_block_to_block_type(self):
+        md_headings = [
+            "## h2 heading",
+            "######      6th level heading"
+        ]
+        bad_headings = [
+            " # not a heading",
+            "##also not a heading",
+            "#      \n",
+            "####### there is no lvl 7 heading!!"
+        ]
+        for h in md_headings:
+            self.assertEqual(block_to_block_type(h), BlockType.H)
+        for no_h in bad_headings:
+            self.assertEqual(block_to_block_type(no_h), BlockType.P)
+        md_code = [
+            """```
+                    <html><head></head><body></body>
+            ```""",
+            "```\nbla\n     something\n```"
+        ]
+        bad_code = []
+        for code in md_code:
+            self.assertEqual(block_to_block_type(code), BlockType.CODE)
+        for no_code in bad_code:
+            self.assertEqual(block_to_block_type(no_code), BlockType.P)
+        md_blockquote = [
+            ">something\n> and more\n>and so on",
+            "> also fiiine"
+        ]
+        bad_quote = [
+            "> starts out well\n > but then :(",
+            " > but there is no leading whitespace expected ;("
+        ]
+        for quote in md_blockquote:
+            self.assertEqual(block_to_block_type(quote), BlockType.BQ)
+        for no_quote in bad_quote:
+            self.assertEqual(block_to_block_type(no_quote), BlockType.P)
+        md_ul = [
+            "- just one point",
+            "- one line\n-  second line\n- 1\n-  ",
+        ]
+        bad_ul = [
+            " - first point",
+            "-no gap :(",
+            "- gap in first line but then\n-no gap ;("
+        ]
+        for ul in md_ul:
+            self.assertEqual(block_to_block_type(ul), BlockType.UL)
+        for no_ul in bad_ul:
+            self.assertEqual(block_to_block_type(no_ul), BlockType.P)
+        md_ol = [
+            "666. just one point",
+            "1. one line\n3.  second line\n4807. 1\n6.  ",
+        ]
+        bad_ol = [
+            " 1. first point",
+            "1.no gap :(",
+            "1. gap in first line but then\n2.no gap ;(",
+            "0. no zero indexing"
+        ]
+        for ol in md_ol:
+            self.assertEqual(block_to_block_type(ol), BlockType.OL)
+        for no_ol in bad_ol:
+            self.assertEqual(block_to_block_type(no_ol), BlockType.P)
+        
+        
+
 
 if __name__ == "__main__":
     unittest.main()
