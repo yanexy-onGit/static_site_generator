@@ -7,7 +7,7 @@ from functools import reduce
 from parentnode import ParentNode
 from sub_functions import * 
 
-def generate_pages_recursive(dir_path_content="content", template_path="template.html", dest_dir_path="public"):
+def generate_pages_recursive(dir_path_content="content", template_path="template.html", dest_dir_path="public", basepath="/"):
     md_path_file_tups = []
     def crawl_for_md_files(dir):
         for node in listdir(dir):
@@ -19,9 +19,10 @@ def generate_pages_recursive(dir_path_content="content", template_path="template
                 crawl_for_md_files(node_path)
     crawl_for_md_files(dir_path_content)
     for dir_path, file in md_path_file_tups:
-        generate_page(file, template_path, join(dest_dir_path, dir_path))
+        # print(f"{file} provided {join(dest_dir_path, dir_path)} as dest_dir to generate()")
+        generate_page(file, template_path, join(dest_dir_path, dir_path), basepath)
 
-def generate_page(from_path, template_path="template.html", dest_path="public/index.html"):
+def generate_page(from_path, template_path="template.html", dest_path="public/index.html", basepath="/"):
     if not exists(from_path):
         raise Exception("'from_path' invalid")
     if not exists(template_path):
@@ -35,6 +36,7 @@ def generate_page(from_path, template_path="template.html", dest_path="public/in
     with open(template_path) as template_file:
         template = template_file.read()
     full_html = sub(r"\{\{ Title \}\}", title, sub(r"\{\{ Content \}\}", html_content, template))
+    full_html = sub(r'(?<=href=")/', basepath, sub(r'(?<=src=")/', basepath, full_html))
     dest_dir_path = reduce(lambda tail, head: (
             len(join(tail, head)) and (exists(join(tail, head)) or print(f"creating: {join(tail, head)}") or mkdir(join(tail, head))),
             join(tail, head)
@@ -66,10 +68,9 @@ def markdown_to_html_node(md):
         main_node_children.append(ParentNode(tag=html_tag, children=html_block_children))
     return ParentNode("div", children=main_node_children)
 
-def mv_contents_static_to_public():
-    public_dir_path = "public"
-    rmtree(public_dir_path, ignore_errors=True)
-    mkdir(public_dir_path)
+def mv_contents_static_to_(dest_dir_path="public"):
+    rmtree(dest_dir_path, ignore_errors=True)
+    mkdir(dest_dir_path)
     def copy_over(arg_from, arg_to):
         if not exists(arg_from) or not exists(arg_to):
             raise ValueError("invalid path")
@@ -82,7 +83,7 @@ def mv_contents_static_to_public():
                 dst_dir_path = join(arg_to, node)
                 mkdir(dst_dir_path)
                 copy_over(node_path, dst_dir_path)
-    copy_over("static", public_dir_path)
+    copy_over("static", dest_dir_path)
 
 def extract_title(md):
     search_title_res = search(r"(?m)(?<=^# )[^\n$]*", md)
