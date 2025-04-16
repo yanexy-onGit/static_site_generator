@@ -1,7 +1,8 @@
-from textnode import TextType, TextNode
+from functions import *
 
 def main():
-    print(TextNode("bla", TextType.PLAIN, "https://www.boot.dev"))  
+    mv_contents_static_to_public()
+    generate_pages_recursive("content")
 
 if __name__ == "__main__":
     main()

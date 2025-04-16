@@ -11,7 +11,7 @@ class TagType():
     BOLD = "b"
     ITALIC = "i"
     CODE = "code"
-    LINK = "link"
+    LINK = "a"
     IMG = "img"
 
 class BlockType(Enum):
@@ -42,7 +42,7 @@ def text_node_to_html_node(text_node):
         case TextType.LINK:
             return LeafNode(TagType.LINK, text_node.text, props={ "href": text_node.url })
         case TextType.IMG:
-            return LeafNode(TagType.IMG, None, props={ "src": text_node.url, "alt": text_node.text })
+            return LeafNode(TagType.IMG, text_node.text, props={ "src": text_node.url, "alt": text_node.text })
     raise Exception("text_node.text_type invalid")
 
 # for text_to_textnodes function
