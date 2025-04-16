@@ -19,7 +19,6 @@ def generate_pages_recursive(dir_path_content="content", template_path="template
                 crawl_for_md_files(node_path)
     crawl_for_md_files(dir_path_content)
     for dir_path, file in md_path_file_tups:
-        # print(f"{file} provided {join(dest_dir_path, dir_path)} as dest_dir to generate()")
         generate_page(file, template_path, join(dest_dir_path, dir_path), basepath)
 
 def generate_page(from_path, template_path="template.html", dest_path="public/index.html", basepath="/"):
@@ -36,7 +35,6 @@ def generate_page(from_path, template_path="template.html", dest_path="public/in
     with open(template_path) as template_file:
         template = template_file.read()
     full_html = sub(r"\{\{ Title \}\}", title, sub(r"\{\{ Content \}\}", html_content, template))
-    full_html = sub(r'(?<=href=")/', basepath, sub(r'(?<=src=")/', basepath, full_html))
     dest_dir_path = reduce(lambda tail, head: (
             len(join(tail, head)) and (exists(join(tail, head)) or print(f"creating: {join(tail, head)}") or mkdir(join(tail, head))),
             join(tail, head)
