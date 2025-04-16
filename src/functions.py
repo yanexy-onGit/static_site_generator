@@ -7,7 +7,7 @@ from functools import reduce
 from parentnode import ParentNode
 from sub_functions import * 
 
-def generate_pages_recursive(dir_path_content="content", template_path="template.html", dest_dir_path="public"):
+def generate_pages_recursive(dir_path_content="content", template_path="template.html", dest_dir_path="public", repo_name=None):
     md_path_file_tups = []
     def crawl_for_md_files(dir):
         for node in listdir(dir):
@@ -19,9 +19,9 @@ def generate_pages_recursive(dir_path_content="content", template_path="template
                 crawl_for_md_files(node_path)
     crawl_for_md_files(dir_path_content)
     for dir_path, file in md_path_file_tups:
-        generate_page(file, template_path, join(dest_dir_path, dir_path))
+        generate_page(file, template_path, join(dest_dir_path, dir_path), repo_name)
 
-def generate_page(from_path, template_path="template.html", dest_path="public/index.html", base_omit_root=True):
+def generate_page(from_path, template_path="template.html", dest_path="public/index.html", repo_name=None):
     if not exists(from_path):
         raise Exception("'from_path' invalid")
     if not exists(template_path):
@@ -35,9 +35,9 @@ def generate_page(from_path, template_path="template.html", dest_path="public/in
     with open(template_path) as template_file:
         template = template_file.read()
     full_html = sub(r"\{\{ Title \}\}", title, sub(r"\{\{ Content \}\}", html_content, template))
-    if base_omit_root:
+    if repo_name:
         full_html = sub(r'(?<=href=")/', "", sub(r'(?<=src=")/', "", full_html))
-        full_html = sub(r"(?<=<head>)", f'<base href="/{sub(r"^[^/]*/", "", dest_path)}/">', full_html)
+        full_html = sub(r"(?<=<head>)", f'<base href="/{repo_name}/">', full_html)
     dest_dir_path = reduce(lambda tail, head: (
             len(join(tail, head)) and (exists(join(tail, head)) or print(f"creating: {join(tail, head)}") or mkdir(join(tail, head))),
             join(tail, head)
