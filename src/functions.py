@@ -1,3 +1,7 @@
+from os import mkdir, listdir
+from os.path import exists, join, isfile
+from shutil import rmtree, copy
+
 from parentnode import ParentNode
 from sub_functions import * 
 
@@ -19,4 +23,25 @@ def markdown_to_html_node(md):
         else:
             html_block_children = text_to_children(text)
         main_node_children.append(ParentNode(tag=html_tag, children=html_block_children))
-    return ParentNode("div", children=main_node_children) 
+    return ParentNode("div", children=main_node_children)
+
+def mv_contents_static_to_public():
+    public_dir_path = "public"
+    rmtree(public_dir_path, ignore_errors=True)
+    mkdir(public_dir_path)
+    def copy_over(arg_from, arg_to):
+        if not exists(arg_from) or not exists(arg_to):
+            raise ValueError("invalid path")
+        for node in listdir(arg_from):
+            node_path = join(arg_from, node)
+            if isfile(node_path):
+                copy(node_path, arg_to)
+            else:
+                dst_dir_path = join(arg_to, node)
+                mkdir(dst_dir_path)
+                copy_over(node_path, dst_dir_path)
+    copy_over("static", public_dir_path)
+
+
+
+
