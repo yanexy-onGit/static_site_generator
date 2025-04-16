@@ -1,1 +1,1 @@
-python3 src/main.py "/https://github.com/yanexy-onGit/static_site_generator/"
+python3 src/main.py "/https://github.com/yanexy-onGit/static_site_generator/docs/"
